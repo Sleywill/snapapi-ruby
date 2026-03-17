@@ -2,6 +2,11 @@
 
 Official Ruby gem for [SnapAPI](https://snapapi.pics) — the lightning-fast screenshot, scrape, extract, PDF, video, and AI-analyze API.
 
+[![Gem Version](https://img.shields.io/gem/v/snapapi?label=rubygems&color=cc3429)](https://rubygems.org/gems/snapapi)
+[![CI](https://github.com/Sleywill/snapapi-ruby/actions/workflows/ci.yml/badge.svg)](https://github.com/Sleywill/snapapi-ruby/actions)
+[![Ruby 2.7+](https://img.shields.io/badge/Ruby-2.7%2B-cc342d.svg)](https://www.ruby-lang.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+
 ## Installation
 
 Add to your `Gemfile`:
@@ -496,6 +501,7 @@ MIT — see [LICENSE](LICENSE).
 
 - [SnapAPI Website](https://snapapi.pics)
 - [API Documentation](https://snapapi.pics/docs)
-- [GitHub](https://github.com/Sleywill/snapapi-ruby)
+- [GitHub Repository](https://github.com/Sleywill/snapapi-ruby)
 - [RubyGems](https://rubygems.org/gems/snapapi)
+- [Changelog](./CHANGELOG.md)
 - [Report Issues](https://github.com/Sleywill/snapapi-ruby/issues)
