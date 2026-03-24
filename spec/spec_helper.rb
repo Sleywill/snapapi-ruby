@@ -21,6 +21,7 @@ RSpec.configure do |config|
   # Disable real HTTP requests in tests
   config.before(:each) do
     WebMock.disable_net_connect!
+    SnapAPI.reset_configuration!
   end
 
   config.after(:each) do

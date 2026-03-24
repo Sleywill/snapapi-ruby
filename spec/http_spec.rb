@@ -199,7 +199,7 @@ RSpec.describe SnapAPI::HttpClient do
   end
 
   # ---------------------------------------------------------------------------
-  # Retry behaviour (no real sleeps — override sleep)
+  # Retry behaviour (no real sleeps -- override sleep)
   # ---------------------------------------------------------------------------
 
   describe "retry behaviour" do

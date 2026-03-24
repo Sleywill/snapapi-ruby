@@ -22,6 +22,56 @@ RSpec.describe SnapAPI::Client do
     it "accepts a valid api_key" do
       expect { described_class.new(api_key: "sk_live_abc") }.not_to raise_error
     end
+
+    it "uses api_key from configuration block when not given directly" do
+      SnapAPI.configure { |c| c.api_key = "sk_live_from_config" }
+      stub_get("/v1/ping", response_body: { status: "ok" })
+      c = described_class.new
+      c.ping
+      expect(WebMock).to have_requested(:get, "https://api.snapapi.pics/v1/ping")
+        .with(headers: { "X-Api-Key" => "sk_live_from_config" })
+    end
+
+    it "prefers direct api_key over configuration" do
+      SnapAPI.configure { |c| c.api_key = "sk_live_from_config" }
+      stub_get("/v1/ping", response_body: { status: "ok" })
+      c = described_class.new(api_key: "sk_live_direct")
+      c.ping
+      expect(WebMock).to have_requested(:get, "https://api.snapapi.pics/v1/ping")
+        .with(headers: { "X-Api-Key" => "sk_live_direct" })
+    end
+
+    it "raises when neither direct nor configured api_key is set" do
+      SnapAPI.reset_configuration!
+      expect { described_class.new }.to raise_error(ArgumentError, /api_key is required/)
+    end
+  end
+
+  # ---------------------------------------------------------------------------
+  # Configuration
+  # ---------------------------------------------------------------------------
+
+  describe "SnapAPI.configure" do
+    it "allows setting api_key via block" do
+      SnapAPI.configure do |c|
+        c.api_key = "sk_live_block"
+      end
+      expect(SnapAPI.configuration.api_key).to eq("sk_live_block")
+    end
+
+    it "allows setting custom base_url" do
+      SnapAPI.configure do |c|
+        c.base_url = "https://custom.api.example.com"
+      end
+      expect(SnapAPI.configuration.base_url).to eq("https://custom.api.example.com")
+    end
+
+    it "reset_configuration! restores defaults" do
+      SnapAPI.configure { |c| c.api_key = "test"; c.timeout = 120 }
+      SnapAPI.reset_configuration!
+      expect(SnapAPI.configuration.api_key).to be_nil
+      expect(SnapAPI.configuration.timeout).to eq(60)
+    end
   end
 
   # ---------------------------------------------------------------------------
@@ -100,6 +150,14 @@ RSpec.describe SnapAPI::Client do
           body = JSON.parse(req.body)
           body["pageSize"] == "letter" && body["landscape"] == true
         }
+    end
+  end
+
+  describe "#generate_pdf" do
+    it "is an alias for #pdf" do
+      stub_post("/v1/screenshot", response_body: "%PDF-1.4", content_type: "application/pdf")
+      result = client.generate_pdf(url: "https://example.com")
+      expect(result).to include("%PDF")
     end
   end
 
@@ -226,6 +284,14 @@ RSpec.describe SnapAPI::Client do
           body = JSON.parse(req.body)
           body["width"] == 1200 && body["height"] == 630
         }
+    end
+  end
+
+  describe "#generate_og_image" do
+    it "is an alias for #og_image" do
+      stub_post("/v1/screenshot", response_body: fake_png, content_type: "image/png")
+      result = client.generate_og_image(url: "https://example.com")
+      expect(result).to start_with("\x89PNG")
     end
   end
 

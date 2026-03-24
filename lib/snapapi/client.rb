@@ -14,7 +14,14 @@ module SnapAPI
   #   # Save directly to file
   #   client.screenshot_to_file("https://example.com", "screenshot.png")
   #
-  # == Configuration
+  # == Configuration Block
+  #
+  #   SnapAPI.configure do |config|
+  #     config.api_key = "sk_live_..."
+  #   end
+  #   client = SnapAPI::Client.new
+  #
+  # == Direct Configuration
   #
   #   client = SnapAPI::Client.new(
   #     api_key:     "sk_live_...",
@@ -24,20 +31,22 @@ module SnapAPI
   #     retry_delay: 0.5,
   #   )
   class Client
-    # @param api_key [String] Your SnapAPI key (required).
-    # @param base_url [String] Override the API base URL.
-    # @param timeout [Integer] Request timeout in seconds (default: 60).
-    # @param max_retries [Integer] Auto-retry limit on 429/5xx (default: 3).
-    # @param retry_delay [Float] Initial backoff delay in seconds (default: 0.5).
-    def initialize(api_key:, base_url: nil, timeout: nil, max_retries: nil, retry_delay: nil)
-      raise ArgumentError, "api_key is required" if api_key.nil? || api_key.empty?
+    # @param api_key [String, nil] Your SnapAPI key. Falls back to SnapAPI.configuration.api_key.
+    # @param base_url [String, nil] Override the API base URL.
+    # @param timeout [Integer, nil] Request timeout in seconds (default: 60).
+    # @param max_retries [Integer, nil] Auto-retry limit on 429/5xx (default: 3).
+    # @param retry_delay [Float, nil] Initial backoff delay in seconds (default: 0.5).
+    def initialize(api_key: nil, base_url: nil, timeout: nil, max_retries: nil, retry_delay: nil)
+      config = SnapAPI.configuration
+      resolved_key = api_key || config.api_key
+      raise ArgumentError, "api_key is required" if resolved_key.nil? || resolved_key.empty?
 
       @http = HttpClient.new(
-        api_key:     api_key,
-        base_url:    base_url  || HttpClient::DEFAULT_BASE_URL,
-        timeout:     timeout   || HttpClient::DEFAULT_TIMEOUT,
-        max_retries: max_retries || HttpClient::DEFAULT_MAX_RETRIES,
-        retry_delay: retry_delay || HttpClient::DEFAULT_RETRY_DELAY,
+        api_key:     resolved_key,
+        base_url:    base_url    || config.base_url,
+        timeout:     timeout     || config.timeout,
+        max_retries: max_retries || config.max_retries,
+        retry_delay: retry_delay || config.retry_delay,
       )
     end
 
@@ -61,7 +70,7 @@ module SnapAPI
     # @param full_page [Boolean] Capture the full scrollable page.
     # @param full_page_scroll_delay [Integer, nil] Delay between scroll steps (ms).
     # @param full_page_max_height [Integer, nil] Maximum height for full-page (px).
-    # @param selector [String, nil] CSS selector — capture only that element.
+    # @param selector [String, nil] CSS selector -- capture only that element.
     # @param delay [Integer] Extra delay before capture in ms.
     # @param timeout [Integer, nil] Navigation timeout in ms.
     # @param wait_until [String, nil] Navigation event to wait for.
@@ -199,6 +208,16 @@ module SnapAPI
     def pdf_to_file(url, filepath, **kwargs)
       bytes = pdf(url: url, **kwargs)
       File.binwrite(filepath, bytes)
+    end
+
+    # Alias for {#pdf}. Generates a PDF document.
+    #
+    # @param url [String, nil] Page URL to convert.
+    # @param html [String, nil] Raw HTML to convert.
+    # @param **kwargs Additional PDF options.
+    # @return [String] Raw PDF bytes.
+    def generate_pdf(url: nil, html: nil, **kwargs)
+      pdf(url: url, html: html, **kwargs)
     end
 
     # -------------------------------------------------------------------------
@@ -371,6 +390,17 @@ module SnapAPI
     # @return [String] Raw image bytes.
     def og_image(url:, format: "png", width: 1200, height: 630)
       @http.post("/v1/screenshot", { url: url, format: format, width: width, height: height })
+    end
+
+    # Alias for {#og_image}. Generates an Open Graph social preview image.
+    #
+    # @param url [String] URL to generate an OG image for.
+    # @param format [String] Output format (default: "png").
+    # @param width [Integer] Image width (default: 1200).
+    # @param height [Integer] Image height (default: 630).
+    # @return [String] Raw image bytes.
+    def generate_og_image(url:, format: "png", width: 1200, height: 630)
+      og_image(url: url, format: format, width: width, height: height)
     end
 
     # -------------------------------------------------------------------------

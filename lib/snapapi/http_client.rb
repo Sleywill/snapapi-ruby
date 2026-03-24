@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-require "net/http"
-require "uri"
+require "faraday"
+require "faraday/retry"
 require "json"
 
 module SnapAPI
-  # Internal HTTP transport layer using Net::HTTP.
+  # Internal HTTP transport layer using Faraday.
   # Handles serialisation, authentication, retry with exponential backoff,
   # and error mapping. Not part of the public API.
   class HttpClient # :nodoc:
@@ -22,6 +22,8 @@ module SnapAPI
       @timeout     = timeout
       @max_retries = max_retries
       @retry_delay = retry_delay
+
+      @conn = build_connection
     end
 
     # Perform a GET request.
@@ -43,6 +45,19 @@ module SnapAPI
 
     private
 
+    def build_connection
+      Faraday.new(url: @base_url) do |f|
+        f.options.timeout      = @timeout
+        f.options.open_timeout = @timeout
+        f.headers["X-Api-Key"]      = @api_key
+        f.headers["Authorization"]  = "Bearer #{@api_key}"
+        f.headers["Content-Type"]   = "application/json"
+        f.headers["Accept"]         = "*/*"
+        f.headers["User-Agent"]     = "snapapi-ruby/#{SnapAPI::VERSION}"
+        f.adapter Faraday.default_adapter
+      end
+    end
+
     def request_with_retry(method, path, body = nil)
       attempt = 0
       begin
@@ -57,60 +72,30 @@ module SnapAPI
         raise unless retryable?(e)
         sleep(compute_backoff(attempt))
         retry
-      rescue Net::OpenTimeout, Net::ReadTimeout => e
+      rescue Faraday::TimeoutError => e
         raise if attempt > @max_retries
         sleep(compute_backoff(attempt))
         raise TimeoutError, "Request timed out: #{e.message}" unless attempt <= @max_retries
         retry
-      rescue SocketError, Errno::ECONNREFUSED, Errno::EHOSTUNREACH, EOFError => e
+      rescue Faraday::ConnectionFailed, Faraday::SSLError => e
         raise NetworkError, "Network error: #{e.message}"
       end
     end
 
     def execute(method, path, body)
-      uri = URI.parse("#{@base_url}#{path}")
-
-      http = Net::HTTP.new(uri.host, uri.port)
-      http.use_ssl     = uri.scheme == "https"
-      http.open_timeout = @timeout
-      http.read_timeout = @timeout
-
-      req = build_request(method, uri, body)
-      response = http.request(req)
-
+      response = @conn.run_request(method, path, body ? JSON.generate(body) : nil, nil)
       handle_response(response)
     end
 
-    def build_request(method, uri, body)
-      klass = {
-        get:    Net::HTTP::Get,
-        post:   Net::HTTP::Post,
-        delete: Net::HTTP::Delete,
-      }.fetch(method) { raise ArgumentError, "Unsupported method: #{method}" }
-
-      req = klass.new(uri.request_uri)
-      req["X-Api-Key"]    = @api_key
-      req["Authorization"] = "Bearer #{@api_key}"
-      req["Content-Type"] = "application/json"
-      req["Accept"]       = "*/*"
-      req["User-Agent"]   = "snapapi-ruby/#{SnapAPI::VERSION}"
-
-      if body
-        req.body = JSON.generate(body)
-      end
-
-      req
-    end
-
     def handle_response(response)
-      code = response.code.to_i
+      code = response.status
 
       if code >= 400
         raise parse_error(code, response.body, response)
       end
 
       # Binary responses (images, PDF, video)
-      content_type = response["Content-Type"] || ""
+      content_type = response.headers["content-type"] || ""
       if content_type.start_with?("image/", "application/pdf", "video/")
         return response.body
       end
@@ -149,7 +134,7 @@ module SnapAPI
         fields = data["fields"] || {}
         ValidationError.new(message, fields: fields, details: details)
       when 429
-        retry_after = (response["Retry-After"] || response["retry-after"] || data["retryAfter"] || 1.0).to_f
+        retry_after = (response.headers["retry-after"] || data["retryAfter"] || 1.0).to_f
         RateLimitError.new(message, retry_after: retry_after, details: details)
       else
         Error.new(message, code: code, status_code: status_code, details: details)

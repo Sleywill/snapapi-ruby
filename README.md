@@ -4,7 +4,7 @@ Official Ruby gem for [SnapAPI](https://snapapi.pics) — the lightning-fast scr
 
 [![Gem Version](https://img.shields.io/gem/v/snapapi?label=rubygems&color=cc3429)](https://rubygems.org/gems/snapapi)
 [![CI](https://github.com/Sleywill/snapapi-ruby/actions/workflows/ci.yml/badge.svg)](https://github.com/Sleywill/snapapi-ruby/actions)
-[![Ruby 2.7+](https://img.shields.io/badge/Ruby-2.7%2B-cc342d.svg)](https://www.ruby-lang.org/)
+[![Ruby 3.0+](https://img.shields.io/badge/Ruby-3.0%2B-cc342d.svg)](https://www.ruby-lang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 
 ## Installation
@@ -44,15 +44,33 @@ client.screenshot_to_file("https://example.com", "screenshot.png")
 
 ## Features
 
-- **Zero runtime dependencies** — uses only Ruby's built-in `net/http`, `json`, `uri`
+- **Faraday HTTP client** with retry middleware for robust networking
 - **Automatic retries** with exponential backoff on 429 / 5xx responses
 - **Rate limit handling** with `Retry-After` header support
-- **Typed response objects** — structured, IDE-friendly results
+- **Configuration block** -- set defaults once via `SnapAPI.configure`
+- **Typed response objects** -- structured, IDE-friendly results
 - **Custom exception hierarchy** per error category
-- **All endpoints** — screenshot, scrape, extract, PDF, video, OG image, analyze
-- **Ruby 2.7+**
+- **All endpoints** -- screenshot, scrape, extract, PDF, video, OG image, analyze
+- **YARD documentation** on all public methods
+- **Ruby 3.0+**
 
 ## Configuration
+
+### Configuration Block (recommended)
+
+```ruby
+SnapAPI.configure do |config|
+  config.api_key     = "sk_live_..."
+  config.base_url    = "https://api.snapapi.pics"  # Default
+  config.timeout     = 60                           # Seconds (default: 60)
+  config.max_retries = 3                            # Auto-retry on 429 / 5xx (default: 3)
+  config.retry_delay = 0.5                          # Initial backoff seconds (doubles each retry)
+end
+
+client = SnapAPI::Client.new
+```
+
+### Direct Configuration
 
 ```ruby
 client = SnapAPI::Client.new(
