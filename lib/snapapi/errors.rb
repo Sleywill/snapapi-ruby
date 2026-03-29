@@ -47,6 +47,10 @@ module SnapAPI
     end
   end
 
+  # Alias for {SnapAPI::AuthenticationError}.
+  # Provided for consumers who prefer the shorter name.
+  AuthError = AuthenticationError
+
   # Raised when the account has exhausted its API quota (HTTP 402).
   class QuotaExceededError < Error
     def initialize(message = "API quota exceeded", details: nil)

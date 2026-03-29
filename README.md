@@ -3,8 +3,9 @@
 Official Ruby gem for [SnapAPI](https://snapapi.pics) — the lightning-fast screenshot, scrape, extract, PDF, video, and AI-analyze API.
 
 [![Gem Version](https://img.shields.io/gem/v/snapapi?label=rubygems&color=cc3429)](https://rubygems.org/gems/snapapi)
+[![Gem Downloads](https://img.shields.io/gem/dt/snapapi?label=downloads&color=cc3429)](https://rubygems.org/gems/snapapi)
 [![CI](https://github.com/Sleywill/snapapi-ruby/actions/workflows/ci.yml/badge.svg)](https://github.com/Sleywill/snapapi-ruby/actions)
-[![Ruby 3.0+](https://img.shields.io/badge/Ruby-3.0%2B-cc342d.svg)](https://www.ruby-lang.org/)
+[![Ruby 3.0+](https://img.shields.io/badge/Ruby-3.0%2B-CC342D?logo=ruby&logoColor=white)](https://www.ruby-lang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 
 ## Installation
@@ -509,7 +510,12 @@ bundle install
 bundle exec rspec
 ```
 
----
+## Contributing
+
+Contributions are welcome! Please read [CONTRIBUTING.md](./CONTRIBUTING.md) before submitting a PR.
+
+Found a bug? [Open an issue](https://github.com/Sleywill/snapapi-ruby/issues/new?template=bug_report.md).
+Have an idea? [Request a feature](https://github.com/Sleywill/snapapi-ruby/issues/new?template=feature_request.md).
 
 ## License
 
@@ -519,7 +525,7 @@ MIT — see [LICENSE](LICENSE).
 
 - [SnapAPI Website](https://snapapi.pics)
 - [API Documentation](https://snapapi.pics/docs)
-- [GitHub Repository](https://github.com/Sleywill/snapapi-ruby)
 - [RubyGems](https://rubygems.org/gems/snapapi)
+- [GitHub Repository](https://github.com/Sleywill/snapapi-ruby)
 - [Changelog](./CHANGELOG.md)
 - [Report Issues](https://github.com/Sleywill/snapapi-ruby/issues)
